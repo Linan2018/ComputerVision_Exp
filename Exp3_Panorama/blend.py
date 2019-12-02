@@ -27,10 +27,27 @@ def imageBoundingBox(img, M):
          maxX: int for the maximum X value of a corner
          maxY: int for the maximum Y value of a corner
     """
-    #TODO 8
-    #TODO-BLOCK-BEGIN
-    raise Exception("TODO in blend.py not implemented")
-    #TODO-BLOCK-END
+    # TODO 8
+    # TODO-BLOCK-BEGIN
+    # print("start TODO 8  imageBoundingBox")
+
+    h = img.shape[0] - 1
+    w = img.shape[1] - 1
+
+    left_top = np.array([[0], [0], [1]])
+    right_top = np.array([[w], [0], [1]])
+    left_bottom = np.array([[0], [h], [1]])
+    right_bottom = np.array([[w], [h], [1]])
+
+    left_top, right_top, left_bottom, right_bottom = \
+        tuple(map(lambda v: M.dot(v) / M.dot(v)[-1], [left_top, right_top, left_bottom, right_bottom]))
+
+    minX = min(left_top[0], right_top[0], left_bottom[0], right_bottom[0])
+    minY = min(left_top[1], right_top[1], left_bottom[1], right_bottom[1])
+    maxX = max(left_top[0], right_top[0], left_bottom[0], right_bottom[0])
+    maxY = max(left_top[1], right_top[1], left_bottom[1], right_bottom[1])
+
+    # TODO-BLOCK-END
     return int(minX), int(minY), int(maxX), int(maxY)
 
 
@@ -48,10 +65,69 @@ def accumulateBlend(img, acc, M, blendWidth):
     """
     # BEGIN TODO 10
     # Fill in this routine
-    #TODO-BLOCK-BEGIN
-    raise Exception("TODO in blend.py not implemented")
-    #TODO-BLOCK-END
+    # TODO-BLOCK-BEGIN
+    # print("start TODO 10 accumulateBlend   add  acc")
+    # print("img.shape:", img.shape)
+    # print("acc.shape:", acc.shape)
+    minX, minY, maxX, maxY = imageBoundingBox(img, M)
+    # print("M:\n", M)
+    # print("img.shape", img.shape)
+    width, height = maxX - minX, maxY - minY
+    # print("height, width", height, width)
+
+    x_mesh, y_mesh = np.meshgrid(range(minX, maxX), range(minY, maxY))
+
+    grids = np.array([[*pt, 1] for pt in zip(x_mesh.flatten(), y_mesh.flatten())]).T
+    # print("grids.shape", grids.shape)
+    pre_grids = np.dot(np.linalg.inv(M), grids)  # 反卷绕
+
+    pre_grids /= pre_grids[-1]
+    # print("pre_grids.shape", pre_grids.shape)
+
+    src = cv2.remap(img, pre_grids[0].reshape(height, width).astype(np.float32),
+                    pre_grids[1].reshape(height, width).astype(np.float32), cv2.INTER_LINEAR)
+    # print("src.shape:", src.shape)
+    # 权重w
+
+    # cv2.imwrite("img.png", src)
+    # cv2.imshow("src", src[:, :, :3].astype(np.uint8))
+    # cv2.waitKey(0)  # 暂停窗口
+
+    w = np.ones(shape=(height, width))
+
+    blend = np.linspace(1, 1 / blendWidth, blendWidth)
+
+    w[:, :blendWidth] = np.flip(blend)
+    w[:, -1 * blendWidth:] = blend
+
+    dst = np.multiply(src, np.expand_dims(w, -1))
+
+    # cv2.imshow("w", np.expand_dims(w, -1).astype(np.uint8))
+    # cv2.waitKey(0)  # 暂停窗口
+
+    # print("dst.shape:", dst.shape)
+    # print("minX: maxX+1", maxX+1 - minX)
+    # print("acc[minY: maxY, minX: maxX, :3].shape:", acc[minY: maxY, minX: maxX, :3].shape)
+    # print("minY, maxY, minX, maxX", minY, maxY, minX, maxX)
+
+    # cv2.imwrite("img.png", img)
+    # cv2.imwrite("dst.png", dst[:, :, :3].astype(np.uint8))
+    # cv2.imshow("dst", dst[:, :, :3].astype(np.uint8))
+    # cv2.imshow("img", img)
+    # cv2.waitKey(0)  # 暂停窗口
+
+    acc[minY: maxY, minX: maxX, :3] += dst
+    acc[minY: maxY, minX: maxX, 3] += np.multiply(w, np.sum(dst, axis=2) > 0)
+    # acc[minY: maxY, minX: maxX, 3] += w
+
+    # cv2.imwrite("acc.png", acc[:, :, :3].astype(np.uint8))
+    # cv2.imshow("acc", acc[:, :, :3].astype(np.uint8))
+    # cv2.waitKey(0)  # 暂停窗口
+
+    # TODO-BLOCK-END
     # END TODO
+
+    return acc
 
 
 def normalizeBlend(acc):
@@ -64,9 +140,23 @@ def normalizeBlend(acc):
     """
     # BEGIN TODO 11
     # fill in this routine..
-    #TODO-BLOCK-BEGIN
-    raise Exception("TODO in blend.py not implemented")
-    #TODO-BLOCK-END
+    # TODO-BLOCK-BEGIN
+    # print("start TODO 11  normalizeBlend")
+
+    height, width = acc.shape[:2]
+
+    img = np.zeros(shape=(height, width, 3))
+
+    for i in range(height):
+        for j in range(width):
+            if acc[i, j, 3] > 0:
+                img[i, j] = acc[i, j, :3] / acc[i, j, 3]
+            else:
+                img[i, j] = np.array([0, 0, 0])
+
+    img = img.astype(np.uint8)
+
+    # TODO-BLOCK-END
     # END TODO
     return img
 
@@ -96,6 +186,7 @@ def getAccSize(ipv):
     channels = -1
     width = -1  # Assumes all images are the same width
     M = np.identity(3)
+    # print("start TODO 9 getAccSize", "including", len(ipv), "images")
     for i in ipv:
         M = i.position
         img = i.img
@@ -106,21 +197,27 @@ def getAccSize(ipv):
 
         # BEGIN TODO 9
         # add some code here to update minX, ..., maxY
-        #TODO-BLOCK-BEGIN
-        raise Exception("TODO in blend.py not implemented")
-        #TODO-BLOCK-END
+        # TODO-BLOCK-BEGIN
+
+        x1, y1, x2, y2 = imageBoundingBox(img, M)
+        minX = np.minimum(x1, minX)
+        minY = np.minimum(y1, minY)
+        maxX = np.maximum(x2, maxX)
+        maxY = np.maximum(y2, maxY)
+        # TODO-BLOCK-END
         # END TODO
 
     # Create an accumulator image
     accWidth = int(math.ceil(maxX) - math.floor(minX))
     accHeight = int(math.ceil(maxY) - math.floor(minY))
-    print('accWidth, accHeight:', (accWidth, accHeight))
+    # print('accWidth, accHeight:', (accWidth, accHeight))
     translation = np.array([[1, 0, -minX], [0, 1, -minY], [0, 0, 1]])
 
     return accWidth, accHeight, channels, width, translation
 
 
 def pasteImages(ipv, translation, blendWidth, accWidth, accHeight, channels):
+    print(accHeight * accWidth * (channels + 1))
     acc = np.zeros((accHeight, accWidth, channels + 1))
     # Add in all the images
     M = np.identity(3)
@@ -137,6 +234,7 @@ def pasteImages(ipv, translation, blendWidth, accWidth, accHeight, channels):
 def getDriftParams(ipv, translation, width):
     # Add in all the images
     M = np.identity(3)
+    x_init, y_init, x_final, y_final = 0, 0, 0, 0
     for count, i in enumerate(ipv):
         if count != 0 and count != (len(ipv) - 1):
             continue
@@ -160,9 +258,9 @@ def getDriftParams(ipv, translation, width):
 
 def computeDrift(x_init, y_init, x_final, y_final, width):
     A = np.identity(3)
-    drift = (float)(y_final - y_init)
+    drift = float(y_final - y_init)
     # We implicitly multiply by -1 if the order of the images is swapped...
-    length = (float)(x_final - x_init)
+    length = float(x_final - x_init)
     A[0, 2] = -0.5 * width
     # Negative because positive y points downwards
     A[1, 0] = -drift / length
@@ -187,7 +285,10 @@ def blendImages(ipv, blendWidth, is360=False, A_out=None):
 
     # Determine the final image width
     outputWidth = (accWidth - width) if is360 else accWidth
+    # print("(accWidth - width)", (accWidth - width))
+    # print("accWidth", accWidth)
     x_init, y_init, x_final, y_final = getDriftParams(ipv, translation, width)
+    print(x_init, y_init, x_final, y_final)
     # Compute the affine transform
     A = np.identity(3)
     # BEGIN TODO 12
@@ -198,9 +299,13 @@ def blendImages(ipv, blendWidth, is360=False, A_out=None):
     # Then handle the vertical drift
     # Note: warpPerspective does forward mapping which means A is an affine
     # transform that maps accumulator coordinates to final panorama coordinates
-    #TODO-BLOCK-BEGIN
-    raise Exception("TODO in blend.py not implemented")
-    #TODO-BLOCK-END
+    # TODO-BLOCK-BEGIN
+    # print("start TODO 12  blendImages")
+
+    if is360:
+        A = computeDrift(x_init, y_init, x_final, y_final, width)
+
+    # TODO-BLOCK-END
     # END TODO
 
     if A_out is not None:
@@ -212,4 +317,3 @@ def blendImages(ipv, blendWidth, is360=False, A_out=None):
     )
 
     return croppedImage
-

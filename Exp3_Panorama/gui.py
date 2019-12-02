@@ -31,7 +31,7 @@ class AutostitchUIFrame(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.notebook = ttk.Notebook(self.parent)
-        self.notebook.grid(row=0, sticky=tk.N+tk.S+tk.E+tk.W)
+        self.notebook.grid(row=0, sticky=tk.N + tk.S + tk.E + tk.W)
         self.notebook.add(
             HomographyVisualizationFrame(self.notebook, root),
             text='Homography'
@@ -45,7 +45,7 @@ class AutostitchUIFrame(tk.Frame):
         self.notebook.add(
             PanoramaFrame(self.notebook, root), text='Panorama'
         )
-        self.notebook.grid(row=0, sticky=tk.N+tk.S+tk.E+tk.W)
+        self.notebook.grid(row=0, sticky=tk.N + tk.S + tk.E + tk.W)
 
     def updateUI(self):
         self.parent.update()
@@ -142,7 +142,7 @@ class SphericalWarpFrame(AutostitchBaseFrame):
         self.focalLengthEntry = tk.Entry(self)
         self.focalLengthEntry.insert(0, str(DEFAULT_FOCAL_LENGTH))
         self.focalLengthEntry.grid(
-            row=1, column=2, columnspan=2, sticky=tk.W+tk.E
+            row=1, column=2, columnspan=2, sticky=tk.W + tk.E
         )
 
         tk.Label(self, text='k1:').grid(row=2, column=4, sticky=tk.W)
@@ -327,10 +327,10 @@ class AlignmentFrame(StitchingBaseFrame):
     def __init__(self, parent, root):
         StitchingBaseFrame.__init__(self, parent, root, 9, 6)
 
-        tk.Button(self, text='Load Left Image', command=self.loadLeftImage)\
+        tk.Button(self, text='Load Left Image', command=self.loadLeftImage) \
             .grid(row=0, column=0, sticky=tk.W + tk.E)
 
-        tk.Button(self, text='Load Right Image', command=self.loadRightImage)\
+        tk.Button(self, text='Load Right Image', command=self.loadRightImage) \
             .grid(row=0, column=1, sticky=tk.W + tk.E)
 
         tk.Button(self, text='Screenshot', command=self.saveScreenshot).grid(
@@ -511,21 +511,21 @@ class PanoramaFrame(StitchingBaseFrame):
             ipv = []
             for i in range(0, len(processedImages) - 1):
                 self.set_status(
-                    'Computing mapping from {0} to {1}'.format(i, i+1)
+                    'Computing mapping from {0} to {1}'.format(i, i + 1)
                 )
                 ipv.append(
                     blend.ImageInfo('', processedImages[i], np.linalg.inv(t))
                 )
                 t = self.computeMapping(
-                    processedImages[i], processedImages[i+1]
+                    processedImages[i], processedImages[i + 1]
                 ).dot(t)
 
             ipv.append(blend.ImageInfo(
-                '', processedImages[len(processedImages)-1], np.linalg.inv(t))
+                '', processedImages[len(processedImages) - 1], np.linalg.inv(t))
             )
 
             t = self.computeMapping(
-                processedImages[len(processedImages)-1],
+                processedImages[len(processedImages) - 1],
                 processedImages[0]
             ).dot(t)
 
